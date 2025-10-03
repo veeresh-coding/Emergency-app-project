@@ -1,0 +1,506 @@
+<!-- index.html -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Emergency Helping Site </title>
+<style>
+  :root{
+    --bg:#f5f7f9; --card:#fff; --accent:#2d9f6a; --accent2:#f2b139;
+    --danger:#e63946; --muted:#666;
+    font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  }
+  html,body{height:100%; margin:0; background:var(--bg); color:#111;}
+  .wrap{max-width:420px; margin:20px auto; padding:18px;}
+  .hero{display:flex; flex-direction:column; gap:16px; align-items:stretch; text-align:center;}
+  h1{font-size:1.6rem; margin:6px 0; font-weight:700;}
+  .bigbtn{
+    display:block; width:100%; padding:18px; border-radius:14px; border:0; font-size:1.05rem; font-weight:700; cursor:pointer;
+    box-shadow: 0 6px 14px rgba(15,30,40,0.08);
+  }
+  .btn-help{background:var(--accent); color:#fff;}
+  .btn-meds{background:var(--accent2); color:#fff;}
+  .warning{background:#fff0f0; padding:12px; border-radius:10px; color:var(--danger); font-weight:600; margin-top:8px; border:1px solid rgba(230,57,70,0.12);}
+  .small-muted{font-size:0.9rem; color:var(--muted);}
+  .card{background:var(--card); padding:12px; border-radius:12px; box-shadow:0 6px 14px rgba(15,30,40,0.06); margin-top:12px;}
+  .grid{display:grid; grid-template-columns:repeat(2,1fr); gap:10px;}
+  .option{padding:14px; border-radius:10px; text-align:center; cursor:pointer; font-weight:700;}
+  .opt-police{background:#eaf7ff; color:#0b63a3;}
+  .opt-fire{background:#fff2ea; color:#a83d00;}
+  .opt-ems{background:#eafaf0; color:#1a7f44;}
+  .opt-mental{background:#f6f0ff; color:#5b2db1;}
+  .result-list{list-style:none; padding:0; margin:0;}
+  .result-item{display:flex; gap:10px; align-items:center; padding:10px 8px; border-bottom:1px dashed #eee;}
+  .ri-left{flex:1;}
+  .ri-title{font-weight:700; font-size:0.98rem;}
+  .ri-sub{font-size:0.85rem; color:var(--muted);}
+  .ri-actions{display:flex; gap:8px; align-items:center;}
+  .call-btn{background:#111; color:white; padding:8px 10px; border-radius:8px; text-decoration:none; font-weight:700;}
+  .maps-link{background:#fff; color:#333; border:1px solid #eee; padding:8px 10px; border-radius:8px; text-decoration:none;}
+  .search-row{display:flex; gap:8px; margin-bottom:10px;}
+  .input{flex:1; padding:10px 12px; border-radius:10px; border:1px solid #ddd; font-size:0.95rem;}
+  .btn{padding:10px 12px; border-radius:10px; border:0; cursor:pointer; font-weight:700;}
+  .muted{color:var(--muted); font-size:0.9rem;}
+  .chat{display:flex; flex-direction:column; gap:8px; max-height:360px; overflow:auto; padding:8px;}
+  .msg{padding:10px 12px; border-radius:12px; max-width:78%;}
+  .msg.user{align-self:flex-end; background:#e6ffef;}
+  .msg.bot{align-self:flex-start; background:#fff; border:1px solid #eee;}
+  .helpline{display:flex; gap:8px; align-items:center; margin-top:8px;}
+  .helpline .hp-call{background:var(--danger); color:white; padding:8px 10px; border-radius:8px; text-decoration:none; font-weight:700;}
+  footer{margin-top:18px; font-size:0.85rem; color:var(--muted); text-align:center;}
+  @media (max-width:420px){ .wrap{margin:8px;} }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div id="main-screen" class="hero card">
+      <h1>ARE YOU CURRENTLY FACING AN EMERGENCY?</h1>
+      <button id="btnHelp" class="bigbtn btn-help">YES, I NEED HELP</button>
+      <button id="btnMeds" class="bigbtn btn-meds">NO, I NEED MY MEDICINES [PHARMACIES]</button>
+      <div class="warning small-muted">⚠️ <strong>This app is NOT to play with.</strong> It is only for emergencies. Misuse can risk lives.</div>
+      <div class="small-muted" style="margin-top:8px;">Tip: For immediate emergencies call your local emergency number directly.</div>
+    </div>
+
+    <!-- HELP FLOW -->
+    <div id="help-screen" class="card" style="display:none;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div><strong>Emergency — Choose:</strong><div class="muted">Police / Fire / EMS / Mental Health</div></div>
+        <button id="btnBackHelp" class="btn" style="background:#eee;">Back</button>
+      </div>
+
+      <div class="grid" style="margin-top:10px;">
+        <div class="option opt-police" id="optPolice">🚔 Police</div>
+        <div class="option opt-fire" id="optFire">🔥 Fire</div>
+        <div class="option opt-ems" id="optEMS">🚑 EMS</div>
+        <div class="option opt-mental" id="optMental">🧠 Mental Health</div>
+      </div>
+
+      <div id="help-results" style="margin-top:12px;"></div>
+    </div>
+
+    <!-- MEDS FLOW -->
+    <div id="meds-screen" class="card" style="display:none;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div><strong>Find Pharmacies</strong><div class="muted">Enter address or allow GPS</div></div>
+        <button id="btnBackMeds" class="btn" style="background:#eee;">Back</button>
+      </div>
+
+      <div style="margin-top:10px;">
+        <div class="search-row">
+          <input id="medsAddress" class="input" placeholder="Enter address or city (optional)" />
+          <button id="btnUseGPS" class="btn" style="background:#2d9f6a;color:#fff;">Use GPS</button>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button id="btnSearchMeds" class="btn" style="background:var(--accent2); color:#fff;">Search Pharmacies</button>
+          <button id="btnClearMeds" class="btn" style="background:#eee;">Clear</button>
+        </div>
+      </div>
+
+      <div id="meds-results" style="margin-top:12px;"></div>
+      <div style="margin-top:8px;" class="muted">Pharmacy results show name, phone (if available) and link to open in Google Maps. Distance is not shown.</div>
+    </div>
+
+    <!-- MENTAL HEALTH CHAT (reused inside help-results) -->
+    <template id="chat-template">
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div><strong>Support Chat</strong><div class="muted">We are here for you. This chat is not a substitute for professional help.</div></div>
+        </div>
+
+        <div id="chatBox" class="chat" style="margin-top:12px;"></div>
+
+        <div style="display:flex; gap:8px; margin-top:8px;">
+          <input id="chatInput" class="input" placeholder="Type how you feel..." />
+          <button id="sendChat" class="btn" style="background:#2d9f6a;color:#fff;">Send</button>
+        </div>
+
+        <div style="margin-top:10px;">
+          <strong>Immediate helplines</strong>
+          <div class="helpline">
+            <div style="flex:1;"><div><strong>AASRA (India)</strong></div><div class="muted">24x7 Suicide Prevention Helpline</div></div>
+            <a class="hp-call" href="tel:9152987821">Call</a>
+          </div>
+          <div class="helpline">
+            <div style="flex:1;"><div><strong>Vandrevala Foundation</strong></div><div class="muted">Mental health assistance</div></div>
+            <a class="hp-call" href="tel:919999666555">Call</a>
+          </div>
+          <div class="muted" style="margin-top:8px;">(Replace helpline numbers above with valid local helplines for your area.)</div>
+        </div>
+      </div>
+    </template>
+
+    <footer>
+      Made by Veeresh Singh Class 9G Not a replacement for professionals. Always call emergency numbers when needed.
+    </footer>
+  </div>
+
+<script>
+/*
+  Emergency Helper - Single-file frontend demo
+  Uses Overpass API (OpenStreetMap) to find nearby places without API keys.
+  NOTE: Overpass usage should be rate-limited and polite in production.
+*/
+
+// ---------- Helpers ----------
+function el(id){return document.getElementById(id);}
+function show(id){ el(id).style.display='block'; }
+function hide(id){ el(id).style.display='none'; }
+function toRad(x){return x*Math.PI/180;}
+function haversineDist(lat1, lon1, lat2, lon2){
+  const R=6371; // km
+  const dLat = toRad(lat2-lat1);
+  const dLon = toRad(lon2-lon1);
+  const a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)*Math.sin(dLon/2);
+  const c = 2*Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R*c;
+}
+
+// Build Overpass query for place type near lat,lng within radius (m)
+function buildOverpassQuery(lat, lng, radius, types){
+  // types e.g., ["hospital","police","fire_station","pharmacy"]
+  // We'll use amenity tag or emergency/service equivalents.
+  const typeFilter = types.map(t => {
+    if (t === 'fire_station') return '["amenity"="fire_station"]';
+    if (t === 'pharmacy') return '["amenity"="pharmacy"]';
+    if (t === 'hospital') return '["amenity"="hospital"]';
+    if (t === 'police') return '["amenity"="police"]';
+    // fallback
+    return '';
+  }).join(';');
+
+  const q = `[out:json][timeout:25];
+(
+  node${typeFilter}(around:${radius},${lat},${lng});
+  way${typeFilter}(around:${radius},${lat},${lng});
+  relation${typeFilter}(around:${radius},${lat},${lng});
+);
+out center tags;`;
+  return q;
+}
+
+async function overpassSearch(lat, lng, radius, types){
+  const query = buildOverpassQuery(lat,lng,radius,types);
+  const url = 'https://overpass-api.de/api/interpreter';
+  const resp = await fetch(url, {
+    method:'POST', headers: {'Content-Type':'application/x-www-form-urlencoded'}, body: query
+  });
+  if(!resp.ok) throw new Error('Overpass query failed');
+  const data = await resp.json();
+  // Parse nodes/ways/results
+  const places = data.elements.map(el => {
+    const tags = el.tags || {};
+    const name = tags.name || (tags['operator'] || 'Unknown');
+    const phone = tags.phone || tags['contact:phone'] || tags['telephone'] || null;
+    const latC = el.lat ?? (el.center && el.center.lat);
+    const lonC = el.lon ?? (el.center && el.center.lon);
+    return { id: el.id, name, phone, lat: latC, lon: lonC, tags };
+  }).filter(p => p.lat && p.lon);
+  return places;
+}
+
+// Convert lat/lon to Google Maps link
+function googleMapsLink(lat, lon, name){
+  const q = encodeURIComponent(name ? `${name}` : `${lat},${lon}`);
+  return `https://www.google.com/maps/search/?api=1&query=${lat},${lon}&query_place_id=${q}`;
+}
+
+// Show a list of emergency places (with distances)
+function renderEmergencyResults(places, userLat, userLon, emergencyType){
+  const container = document.createElement('div');
+  container.className='card';
+  const title = document.createElement('div');
+  title.innerHTML = `<strong>Nearby ${emergencyType.toUpperCase()}</strong><div class="muted">Tap call to dial emergency number or place phone (if available)</div>`;
+  container.appendChild(title);
+
+  const ul = document.createElement('ul');
+  ul.className='result-list';
+  // compute distances
+  places.sort((a,b)=> {
+    const da = haversineDist(userLat,userLon,a.lat,a.lon);
+    const db = haversineDist(userLat,userLon,b.lat,b.lon);
+    return da-db;
+  });
+
+  for (const p of places){
+    const li = document.createElement('li');
+    li.className='result-item';
+    const left = document.createElement('div'); left.className='ri-left';
+    const titleTxt = document.createElement('div'); titleTxt.className='ri-title'; titleTxt.textContent = p.name || 'Unknown';
+    const distKm = haversineDist(userLat,userLon,p.lat,p.lon);
+    const sub = document.createElement('div'); sub.className='ri-sub';
+    sub.textContent = `${distKm.toFixed(2)} km away`;
+    left.appendChild(titleTxt); left.appendChild(sub);
+
+    const actions = document.createElement('div'); actions.className='ri-actions';
+    // Place phone (if any)
+    if(p.phone){
+      const callPlace = document.createElement('a'); callPlace.className='call-btn';
+      callPlace.href = `tel:${p.phone.replace(/\s+/g,'')}`;
+      callPlace.textContent = 'Call Place';
+      actions.appendChild(callPlace);
+    }
+    // Maps link
+    const maps = document.createElement('a'); maps.className='maps-link'; maps.target='_blank';
+    maps.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.name)}&query_place_id=${p.id}`;
+    maps.textContent = 'Maps';
+    actions.appendChild(maps);
+
+    // official emergency call button (100/101/102 based on type)
+    const emergencyNumber = (emergencyType==='police')? '100' : (emergencyType==='fire')? '101' : (emergencyType==='ems')? '102' : null;
+    if(emergencyNumber){
+      const callBtn = document.createElement('a'); callBtn.className='call-btn'; callBtn.style.background='#d32f2f';
+      callBtn.href = `tel:${emergencyNumber}`; callBtn.textContent = `Call ${emergencyNumber}`;
+      actions.appendChild(callBtn);
+    }
+
+    li.appendChild(left); li.appendChild(actions);
+    ul.appendChild(li);
+  }
+  container.appendChild(ul);
+  return container;
+}
+
+// Render pharmacy results (NO distance)
+function renderPharmacyResults(places){
+  const container = document.createElement('div');
+  container.className='card';
+  const title = document.createElement('div');
+  title.innerHTML = `<strong>Pharmacies</strong><div class="muted">Tap Maps to open directions</div>`;
+  container.appendChild(title);
+
+  const ul = document.createElement('ul');
+  ul.className='result-list';
+
+  for (const p of places){
+    const li = document.createElement('li');
+    li.className='result-item';
+    const left = document.createElement('div'); left.className='ri-left';
+    const titleTxt = document.createElement('div'); titleTxt.className='ri-title'; titleTxt.textContent = p.name || 'Unknown';
+    const sub = document.createElement('div'); sub.className='ri-sub'; sub.textContent = p.phone ? `Phone: ${p.phone}` : 'Phone: N/A';
+    left.appendChild(titleTxt); left.appendChild(sub);
+
+    const actions = document.createElement('div'); actions.className='ri-actions';
+    if(p.phone){
+      const callPlace = document.createElement('a'); callPlace.className='call-btn';
+      callPlace.href = `tel:${p.phone.replace(/\s+/g,'')}`; callPlace.textContent = 'Call';
+      actions.appendChild(callPlace);
+    }
+    const maps = document.createElement('a'); maps.className='maps-link'; maps.target='_blank';
+    maps.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.name)}&query_place_id=${p.id}`;
+    maps.textContent = 'Open Maps';
+    actions.appendChild(maps);
+
+    li.appendChild(left); li.appendChild(actions);
+    ul.appendChild(li);
+  }
+  container.appendChild(ul);
+  return container;
+}
+
+// ---------- UI Wiring ----------
+const btnHelp = el('btnHelp'), btnMeds = el('btnMeds');
+const mainScreen = el('main-screen'), helpScreen = el('help-screen'), medsScreen = el('meds-screen');
+const btnBackHelp = el('btnBackHelp'), btnBackMeds = el('btnBackMeds');
+const helpResults = el('help-results'), medsResults = el('meds-results');
+const optPolice = el('optPolice'), optFire = el('optFire'), optEMS = el('optEMS'), optMental = el('optMental');
+const btnUseGPS = el('btnUseGPS'), btnSearchMeds = el('btnSearchMeds'), medsAddress = el('medsAddress');
+const btnClearMeds = el('btnClearMeds');
+
+btnHelp.addEventListener('click', ()=>{ hide('main-screen'); show('help-screen'); helpResults.innerHTML=''; });
+btnMeds.addEventListener('click', ()=>{ hide('main-screen'); show('meds-screen'); medsResults.innerHTML=''; });
+
+btnBackHelp.addEventListener('click', ()=>{ show('main-screen'); hide('help-screen'); helpResults.innerHTML=''; });
+btnBackMeds.addEventListener('click', ()=>{ show('main-screen'); hide('meds-screen'); medsResults.innerHTML=''; });
+
+// small helper to get lat/lon from either GPS or geocoding by address using Nominatim (no key)
+async function geocodeAddress(address){
+  const q = encodeURIComponent(address);
+  const url = `https://nominatim.openstreetmap.org/search?format=json&q=${q}&limit=1`;
+  const r = await fetch(url, { headers: { 'Accept-Language':'en' }});
+  const j = await r.json();
+  if(j && j.length>0) return {lat: parseFloat(j[0].lat), lon: parseFloat(j[0].lon)};
+  else throw new Error('Address not found');
+}
+
+// get current location
+function getCurrentLocation(){
+  return new Promise((resolve,reject)=>{
+    if(!navigator.geolocation) return reject(new Error('Geolocation not supported'));
+    navigator.geolocation.getCurrentPosition(pos=>{
+      resolve({lat: pos.coords.latitude, lon: pos.coords.longitude});
+    }, err => reject(err), { enableHighAccuracy:true, timeout:10000 });
+  });
+}
+
+// ---------- Emergency option handlers ----------
+async function handleEmergency(type){
+  helpResults.innerHTML = `<div class="muted">Finding nearby ${type} stations...</div>`;
+  try{
+    // 1) get user location
+    let coords;
+    try { coords = await getCurrentLocation(); }
+    catch(e){
+      // prompt for address if GPS fails
+      const address = prompt('Could not access GPS. Enter your address or city (e.g., "Mumbai, India"):');
+      if(!address) { helpResults.innerHTML = '<div class="muted">Location needed to search nearby services.</div>'; return; }
+      const g = await geocodeAddress(address);
+      coords = { lat: g.lat, lon: g.lon };
+    }
+    // 2) Overpass search within radius (e.g., 5000m)
+    const radius = 8000; // in meters
+    const placeMap = { police: ['police'], fire: ['fire_station'], ems: ['hospital'] };
+    const types = placeMap[type] || ['hospital'];
+    const places = await overpassSearch(coords.lat, coords.lon, radius, types);
+    if(places.length === 0){
+      helpResults.innerHTML = `<div class="muted">No nearby ${type} stations found in OSM data. Try again, or use a more specific location.</div>`;
+      return;
+    }
+    helpResults.innerHTML = '';
+    const node = renderEmergencyResults(places, coords.lat, coords.lon, type);
+    helpResults.appendChild(node);
+  } catch(err){
+    console.error(err);
+    helpResults.innerHTML = `<div class="muted">Error: ${err.message}</div>`;
+  }
+}
+
+optPolice.addEventListener('click', ()=> handleEmergency('police'));
+optFire.addEventListener('click', ()=> handleEmergency('fire'));
+optEMS.addEventListener('click', ()=> handleEmergency('ems'));
+
+// ---------- Mental Health chat ----------
+optMental.addEventListener('click', async ()=>{
+  helpResults.innerHTML = '';
+  // Insert chat template
+  const tpl = el('chat-template').content.cloneNode(true);
+  helpResults.appendChild(tpl);
+  const chatBox = helpResults.querySelector('#chatBox');
+  const chatInput = helpResults.querySelector('#chatInput');
+  const sendBtn = helpResults.querySelector('#sendChat');
+
+  // seed message
+  addBotMsg(chatBox, "Hi — I'm here to listen. If you're in immediate danger, please call your local emergency number (100/101/102) or a helpline below. You can type how you feel; I'll try to support you.");
+  function addBotMsg(box, text){ const d=document.createElement('div'); d.className='msg bot'; d.innerText = text; box.appendChild(d); box.scrollTop = box.scrollHeight; }
+  function addUserMsg(box, text){ const d=document.createElement('div'); d.className='msg user'; d.innerText = text; box.appendChild(d); box.scrollTop = box.scrollHeight; }
+
+  sendBtn.addEventListener('click', ()=> processChat());
+  chatInput.addEventListener('keydown', (e)=> { if(e.key==='Enter') processChat(); });
+
+  async function processChat(){
+    const text = chatInput.value.trim();
+    if(!text) return;
+    addUserMsg(chatBox, text);
+    chatInput.value='';
+    // Simple rule-based supportive replies:
+    const reply = generateSupportiveReply(text);
+    // If user mentions suicide or kill myself -> show urgent helpline and emergency note
+    if(/\b(suicid|kill myself|end my life|want to die)\b/i.test(text)){
+      addBotMsg(chatBox, "I'm really sorry you're feeling this way. You are not alone. Please call your local suicide prevention helpline right away or contact someone you trust. I'll show you helpline numbers and can call them for you.");
+      // show helplines (ensure numbers replaced with valid locally correct numbers)
+      addBotMsg(chatBox, "AASRA (India): 9152987821\nIf you are outside India, please contact your local emergency services.");
+      const hpCall = document.createElement('div'); hpCall.className='helpline';
+      hpCall.innerHTML = `<div style="flex:1;"><strong>Immediate Suicide Prevention</strong><div class="muted">Call now</div></div><a class="hp-call" href="tel:9152987821">Call Helpline</a>`;
+      chatBox.appendChild(hpCall); chatBox.scrollTop = chatBox.scrollHeight;
+      return;
+    }
+    // otherwise send supportive reply
+    addBotMsg(chatBox, reply);
+    // Optionally: if you have a backend for OpenAI, you can call it here instead.
+    /*
+    // Example placeholder to call your backend OpenAI proxy:
+    // const res = await fetch('/api/chat', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text})});
+    // const j = await res.json();
+    // addBotMsg(chatBox, j.reply);
+    */
+  }
+});
+
+// Basic supportive reply generator (simple)
+function generateSupportiveReply(text){
+  // very simple pattern replies: empathize + encourage + practical next step
+  const lower = text.toLowerCase();
+  if(/(sad|depress|hopeless|worthless|unhappy)/i.test(lower)){
+    return "I'm really sorry you're going through this. Those feelings are heavy — it's okay to feel like this. Can you tell me one thing that's been on your mind lately? If you feel unsafe, please call a local helpline right now.";
+  }
+  if(/(stressed|anxious|nervous|panic)/i.test(lower)){
+    return "That sounds really stressful. Try a breathing exercise: breathe in for 4 seconds, hold 4, breathe out 6. It helps calm the body. Would you like some coping tips or helpline numbers?";
+  }
+  if(/(failed|bad marks|su*ck|i am dumb)/i.test(lower)){
+    return "Marks don't define your worth. Many successful people failed at something before finding their path. Take a deep breath. Do you want tips for studying or someone to talk to?";
+  }
+  if(/help|what should i do|how to/i.test(lower)){
+    return "If there's immediate danger, call the emergency number (100/101/102). For emotional support, you can call a helpline. If you'd like, tell me more about what's happening and I can help with suggestions.";
+  }
+  // default
+  return "Thanks for sharing that with me. I'm listening. Can you tell me a bit more, or would you like a helpline number to call?";
+}
+
+// ---------- MEDS flow ----------
+btnUseGPS.addEventListener('click', async ()=>{
+  medsAddress.value = '';
+  medsResults.innerHTML = '<div class="muted">Getting GPS location…</div>';
+  try{
+    const pos = await getCurrentLocation();
+    medsResults.innerHTML = `<div class="muted">Found coordinates: ${pos.lat.toFixed(5)}, ${pos.lon.toFixed(5)} — searching pharmacies…</div>`;
+    await searchPharmacies(pos.lat, pos.lon);
+  } catch(err){
+    medsResults.innerHTML = `<div class="muted">GPS error: ${err.message}</div>`;
+  }
+});
+
+btnSearchMeds.addEventListener('click', async ()=>{
+  medsResults.innerHTML='';
+  const q = medsAddress.value.trim();
+  let coords;
+  try{
+    if(q){
+      const g = await geocodeAddress(q);
+      coords = {lat:g.lat, lon:g.lon};
+    } else {
+      coords = await getCurrentLocation();
+    }
+    medsResults.innerHTML = `<div class="muted">Searching pharmacies near provided location…</div>`;
+    await searchPharmacies(coords.lat, coords.lon);
+  } catch(err){
+    medsResults.innerHTML = `<div class="muted">Error: ${err.message}</div>`;
+  }
+});
+
+btnClearMeds.addEventListener('click', ()=>{ medsAddress.value=''; medsResults.innerHTML=''; });
+
+// search pharmacies (no distance shown)
+async function searchPharmacies(lat, lon){
+  try{
+    const places = await overpassSearch(lat, lon, 8000, ['pharmacy']);
+    if(places.length===0){ medsResults.innerHTML = '<div class="muted">No pharmacies found in OSM data near this location.</div>'; return; }
+    medsResults.innerHTML = '';
+    const node = renderPharmacyResults(places);
+    medsResults.appendChild(node);
+  } catch(err){
+    medsResults.innerHTML = `<div class="muted">Error searching pharmacies: ${err.message}</div>`;
+  }
+}
+
+// ---------- Optional: Integrate OpenAI (server-side required) ----------
+/*
+  If you want a powerful NLP chatbot instead of the rule-based one above,
+  create a small backend that stores your OpenAI key and exposes a /api/chat endpoint.
+  The frontend then POSTs {message: "..."} to that endpoint and displays the reply.
+
+  Example backend call (do NOT put keys in frontend):
+    const res = await fetch('/api/chat', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({message: userText})
+    });
+    const j = await res.json();
+    addBotMsg(chatBox, j.reply);
+
+  Backend should call OpenAI's Chat API (ChatCompletions or Responses), with safe system prompt:
+  - Add system text: you are an empathetic, supportive assistant. Always encourage contacting professionals and helplines for emergencies.
+  - Make sure to log and moderate usage.
+*/
+
+// ---------- End ----------
+</script>
+</body>
+</html>
